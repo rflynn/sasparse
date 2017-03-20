@@ -1884,6 +1884,10 @@ class MacroCallUDF:
         return self.__repr__()
 
 
+class MacroStr(AstNode):
+    pass
+
+
 class MacroCallLength(AstNode):
 
     @classmethod
@@ -1910,6 +1914,7 @@ class MacroCallLength(AstNode):
 class MacroCallBuiltin:
 
     _clsmap = {
+        'macro_str': MacroStr,
         'macro_length': MacroCallLength,
     }
 
@@ -3895,6 +3900,14 @@ class SignOnStmt(AstNode):
     pass
 
 
+class SelectStmt(AstNode):
+    pass
+
+
+class LabelStmt(AstNode):
+    pass
+
+
 class VarStmt(AstNode):
     pass
 
@@ -3939,6 +3952,7 @@ class TopLevel:
         'format_stmt': FormatStmt,
         'if_stmt': IfStmt,
         'input_stmt': InputStmt,
+        'label_stmt': LabelStmt,
         'length_stmt': LengthStmt,
         'libname_stmt': LibnameStmt,
         'macro': Macro,
@@ -3952,6 +3966,7 @@ class TopLevel:
         'quit_stmt': QuitStmt,
         'run_stmt': RunStmt,
         'sas_expr': SASExpr,
+        'select_stmt': SelectStmt,
         'signon_stmt': SignOnStmt,
         'space': None,  # Space,
         'title_stmt': Title,

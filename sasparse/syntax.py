@@ -37,6 +37,8 @@ toplevel     := space          /
                 signon_stmt    /
                 pattern_stmt   /
                 rsubmit_stmt   /
+                select_stmt    /
+                label_stmt     /
                 endrsubmit_stmt/
                 waitfor_stmt   /
                 toplevel_funcesque_op /
@@ -98,7 +100,7 @@ macro_reserved := (kwdo      /
                    kwsymdel), ?-[a-zA-Z0-9_]
 
 # user-defined function; something we don't recognize as a built-in
-macro_call_udf     := '%', ?-macro_reserved, ident, spaces1?, macro_params?
+macro_call_udf     := '%', ?-macro_reserved, identmacro, spaces1?, macro_params?
 macro_params       := '(', macro_param_list?, space*, ')'
 macro_param_list   := space?, macro_param_def, (space?, ',', space?,  macro_param_def, space?)*, hanging_comma?
 hanging_comma      := spacecom?, ','
@@ -234,8 +236,16 @@ pattern_stmt    := pattern_ / patternnum
 pattern_        := kwpattern, spaces1?, ';'
 patternnum      := kwpattern, integer, (spaces1?, keyval_list)?, space?, ';'
 
-
 rsubmit_stmt    := kwrsubmit, spaces1?, semistmt
+
+select_stmt     := select_select_stmt, spacecom*, select_when_list, spacecom*, select_otherwise, spacecom*, select_end
+select_select_stmt := kwselect, spacecom*, ';'
+select_when_list := select_when_stmt, (spacecom*, select_when_stmt)*
+select_when_stmt := kwwhen, spacecom*, '(', sas_expr, ')', spacecom*, assign_stmt
+select_otherwise := kwotherwise, spacecom*, ';'
+select_end       := kwend, spacecom*, ';'
+
+label_stmt      := kwlabel, spacecom+, keyval_list, spacecom*, ';'
 
 endrsubmit_stmt := kwendrsubmit, spaces1?, ';'
 
@@ -251,7 +261,12 @@ droppable       := variable_list / sas_identifier
 
 length_stmt     := kwlength, spacecom*, length_var_spec_list, spacecom*, ';'
 length_var_spec_list := length_var_spec, (spacecom*, length_var_spec)*
-length_var_spec := ident, spacecom+, (('$', spacecom*)?, integer)?
+length_var_spec := length_var_list, spacecom+, (('$', spacecom*)?, integer, '.'?)?
+length_var_list := var_list
+
+var_list        := var_ref, (spacecom+, var_ref)*
+var_ref         := var_ref_range / ident / macrovar
+var_ref_range   := identmacro, '-', identmacro
 
 input_stmt      := kwinput, spacecom+, ident, spacecom*, ';'
 datalines_stmt  := kwdatalines, spacecom*, ';', semistmt
@@ -569,6 +584,7 @@ kwmeta       := 'meta' / 'META'
 kwmetapass   := 'metapass' / 'METAPASS'
 kwmetauser   := 'metauser' / 'METAUSER'
 kwmin        := 'min' / 'MIN'
+kwminimum    := 'minimum' / 'MINIMUM'
 kwminoperator:= 'minoperator' / 'MINOPERATOR'
 kwmissing    := 'missing' / 'MISSING'
 kwmlogic     := 'mlogic' / 'MLOGIC'
@@ -617,6 +633,7 @@ kwoption     := 'option' / 'OPTION'
 kwoptions    := 'options' / 'OPTIONS'
 kwor         := 'or' / 'OR'
 kworder      := 'order' / 'ORDER'
+kwotherwise  := 'otherwise' / 'OTHERWISE'
 kwout        := 'out' / 'OUT'
 kwouter      := 'outer' / 'OUTER'
 kwoutfile    := 'outfile' / 'OUTFILE'
@@ -688,6 +705,8 @@ kwto         := 'to' / 'TO'
 kwtranspose  := 'transpose' / 'TRANSPOSE'
 kwubufno     := 'ubufno' / 'UBUFNO'
 kwubufsize   := 'ubufsize' / 'UBUFSIZE'
+kwuniform    := 'uniform' / 'UNIFORM'
+kwuniformby  := 'uniformby' / 'UNIFORMBY'
 kwunion      := 'union' / 'UNION'
 kwunivariate := 'univariate' / 'UNIVARIATE'
 kwuntil      := 'until' / 'UNTIL'
@@ -703,6 +722,7 @@ kwvbar       := 'vbar' / 'VBAR'
 kwview       := 'view' / 'VIEW'
 kwvline      := 'vline' / 'VLINE'
 kwwaitfor    := 'waitfor' / 'WAITFOR'
+kwwidth      := 'width' / 'WIDTH'
 kwwhen       := 'when' / 'WHEN'
 kwwhere      := 'where' / 'WHERE' / 'Where'
 kwwhile      := 'while' / 'WHILE'
@@ -714,12 +734,13 @@ kwz          := 'z' / 'Z'
 
 # NOTE: cannot use "spacecom" in expressions, as *...; is ambiguous wrt mult/exp operators
 sas_expr              := sas_value / sas_expr_tuple / sql_expr_tuple / comment
-sas_value             := sas_expr_binop / sas_expr_scalar
+sas_value             := sas_expr_binop / sas_expr_scalar / sas_expr_triop
 sas_expr_tuple        := '(', space*, sas_expr_list, space*, ')'
 sas_expr_list         := sas_expr, (space*, sas_expr)*
 sas_expr_binop        := sas_expr_scalar, space*, sas_expr_bin_op_val
+sas_expr_triop        := sas_expr_binop, space*, sas_expr_bin_op_val
 sas_expr_bin_op_val   := sas_expr_bin_general / sas_op_between
-sas_expr_bin_general  := sas_op_bin, space*, sas_expr
+sas_expr_bin_general  := sas_op_bin, space*, sas_expr?
 sas_expr_scalar       := (macro           /
                           date_literal    /
                           string          /
@@ -1200,20 +1221,24 @@ proc_print_opt      := proc_print_opt_data  /
                        proc_print_opt_label /
                        proc_print_opt_noobs /
                        proc_print_opt_obs   /
-                       proc_print_opt_split
+                       proc_print_opt_split /
+                       proc_print_opt_width
 proc_print_opt_data := kwdata, space?, '=', space?, sas_identifier, proc_print_data_paren?
 proc_print_opt_label:= kwlabel
 proc_print_opt_obs  := (kwno, spacecom+), kwobs
 proc_print_opt_noobs:= kwnoobs
 proc_print_opt_split:= kwsplit, space?, '=', space?, string
+proc_print_opt_width:= (kwwidth, space?, '=', space?, (kwfull / kwminimum / kwuniformby / kwuniform)) / 'U' / 'MIN' / 'UBY'
 proc_print_data_paren:= spacecom*, '(', -')'*, ')'
 proc_print_body     := proc_print_stmt, (spacecom*, proc_print_stmt)*
 proc_print_stmt     := proc_print_format /
                        proc_print_label /
+                       proc_print_title /
                        proc_print_where /
                        proc_print_var
 proc_print_format   := kwformat, spacecom*, semistmt
 proc_print_label    := kwlabel, spacecom*, semistmt
+proc_print_title    := kwtitle, spacecom*, string, spacecom*, ';'
 proc_print_var      := kwvar, ?-[a-zA-Z0-9_], spacecom*, pseudoident_list, (spacecom*, proc_print_var_opts)?, spacecom*, ';'
 proc_print_var_opts := '/', spacecom*, kwstyle, spacecom*, '=', spacecom*, '{', spacecom*, keyval_list, spacecom*, '}'
 proc_print_where    := kwwhere, spacecom*, sas_expr?, spacecom*, ';'
@@ -1759,7 +1784,7 @@ stringdq     := '"', strdqtxt, '"'
 strdqtxt     := (('%', "'"?) / '""' / -'"')*
 strsqtxt     := (('%', '"'?) / "''" / -"'")*
 spacecom     := space / comment
-space        := [ \t\r\n\v\f\u2002]+
+space        := [ \t\r\n\v\f\u2002\x1a]+
 spaces1      := [ \t\v\f\u2002]+
 comment      := commentmulti / comment1line
 comment1line := "*", -';'*, ';'

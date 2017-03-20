@@ -6,6 +6,11 @@
 
 # Parse SAS
 
+## from Python
+
+    >>> import sasparse
+    >>> sasparse.SASDoc.from_string('data _null_; put "Hello, World!"; run;')
+
 ## from stdin
 
     echo 'data _null_; put "Hello, World!"; run;' | venv/bin/python parse.py

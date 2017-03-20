@@ -35,3 +35,4 @@ matrix:
         - which python3 pip3 || true
         - make install
         - make test
+

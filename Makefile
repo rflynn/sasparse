@@ -1,9 +1,11 @@
 # vim: set ts=8 noet:
 
-test: venv/bin/nosetests
+test: install
 	-@# if/when tests crash or are killed they may leave coverage tmpfiles behind
 	-@$(RM) .coverage.*
 	venv/bin/nosetests
+
+install: venv/bin/nosetests
 
 venv/bin/nosetests: venv
 

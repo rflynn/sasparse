@@ -3,7 +3,7 @@
 matrix:
   include:
 
-    # Linux + Python 2.7 + Python 3.4
+    # Linux + Python 3.4
     - os: linux
       dist: trusty
       sudo: required
@@ -18,7 +18,6 @@ matrix:
             - python3
             - libpython3-dev
       before_install:
-        - make install
         - make test
 
       # OS X 10.12 + Python 3.5
@@ -27,12 +26,11 @@ matrix:
       sudo: required
       language: generic
       python:
-        - 3.5
+        - 3.6
       env:
       before_install:
         - which python3 pip3 || true
         - brew install python3
         - which python3 pip3 || true
-        - make install
         - make test
 

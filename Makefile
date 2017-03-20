@@ -8,7 +8,7 @@ test: venv/bin/nosetests
 venv/bin/nosetests: venv
 
 venv: requirements.txt
-	[ -d venv ] || { virtualenv -p python3 venv || python3 -m venv venv; }
+	test -d venv || { virtualenv -p python3 venv || python3 -m venv venv; }
 	venv/bin/pip install -r requirements.txt
 	@touch venv
 
@@ -18,7 +18,7 @@ distclean: clean
 	$(RM) -r venv/
 
 venvpypy: Makefile
-	[ -d venvpypy ] || { virtualenv --python="$$(which pypy3)" venvpypy || pypy3 -m venv venvpypy; }
+	test -d venvpypy || { virtualenv --python="$$(which pypy3)" venvpypy || pypy3 -m venv venvpypy; }
 	venvpypy/bin/pip install -r requirements.txt
 	@touch venvpypy
 

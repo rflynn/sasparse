@@ -1,0 +1,37 @@
+# vim: set ts=2 et:
+
+matrix:
+  include:
+
+    # Linux + Python 2.7 + Python 3.4
+    - os: linux
+      dist: trusty
+      sudo: required
+      language: generic
+      python:
+        - 3.4  # NOTE: most recent on Ubuntu 14.04
+      env:
+      addons:
+        apt:
+          packages:
+            - cmake
+            - python3
+            - libpython3-dev
+      before_install:
+        - make install
+        - make test
+
+      # OS X 10.12 + Python 3.5
+    - os: osx
+      osx_image: xcode8.2  # OS X 10.12
+      sudo: required
+      language: generic
+      python:
+        - 3.5
+      env:
+      before_install:
+        - which python3 pip3 || true
+        - brew install python3
+        - which python3 pip3 || true
+        - make install
+        - make test
